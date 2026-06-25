@@ -2,9 +2,11 @@ name: Daily commits
 
 on:
   schedule:
-    # 06:17 UTC daily. An odd minute avoids the top-of-hour congestion when
-    # GitHub delays/drops scheduled runs. Adjust to your timezone if you like.
+    # Two odd-minute times (UTC). GitHub frequently runs scheduled jobs hours
+    # late or skips them under load, so the second cron is a safety net. The
+    # per-day guard in the run step ensures we still commit only one batch a day.
     - cron: "17 6 * * *"
+    - cron: "17 13 * * *"
   workflow_dispatch: {} # lets you trigger a run by hand from the Actions tab
 
 # Required so the workflow's GITHUB_TOKEN can push commits back to the repo.
@@ -35,14 +37,24 @@ jobs:
           set -euo pipefail
           chmod +x scripts/log-activity.sh
 
-          # A random number of commits between 2 and 5.
-          n=$(( (RANDOM % 4) + 2 ))
-          echo "Making $n commit(s)."
+          today="$(date -u +'%Y-%m-%d')"
+
+          # Per-day guard: if today's batch already landed (an earlier, delayed,
+          # or duplicate run beat us to it), do nothing. Keeps it to one batch/day
+          # even with two cron times plus manual runs.
+          if git log --grep="daily activity ${today}" --oneline | grep -q .; then
+            echo "Already committed for ${today}; nothing to do."
+            exit 0
+          fi
+
+          # A random number of commits between 6 and 10.
+          n=$(( (RANDOM % 5) + 6 ))
+          echo "Making $n commit(s) for ${today}."
 
           for i in $(seq 1 "$n"); do
             scripts/log-activity.sh "$i" "$n"
             git add -A
-            git commit -m "chore: daily activity $(date -u +'%Y-%m-%d') ($i/$n)"
+            git commit -m "chore: daily activity ${today} ($i/$n)"
           done
 
           git push

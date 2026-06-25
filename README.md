@@ -1,14 +1,18 @@
 # daily-commit-bot
 
 A tiny project that pushes a few commits to this repo every day via a scheduled
-[GitHub Actions](.github/workflows/daily-commit.yml) workflow. Each run appends a
-timestamped line to [`activity-log.md`](activity-log.md) and makes a random 2–5
-commits, so the contribution graph stays green without your machine being on.
+[GitHub Actions](.github/workflows/daily-commit.yml) workflow. Each day it appends
+timestamped lines to [`activity-log.md`](activity-log.md) and makes a random **6–10
+commits**, so the contribution graph stays green without your machine being on.
 
 ## How it works
 
-- `.github/workflows/daily-commit.yml` runs on a cron schedule (`17 6 * * *`, i.e.
-  06:17 UTC daily) and also supports manual runs from the **Actions** tab.
+- `.github/workflows/daily-commit.yml` runs on two cron times (`17 6` and
+  `17 13` UTC) and also supports manual runs from the **Actions** tab. GitHub
+  often delays scheduled jobs by hours, so the second time is a safety net.
+- A **per-day guard** checks whether today's batch already landed and exits early
+  if so — so the two cron times (plus any manual runs) still produce only one
+  batch of 6–10 commits per day, never double.
 - It commits as `sarthakvs10@gmail.com`. Commits count toward your contribution
   graph because that email is tied to your GitHub account, the repo is public,
   and commits land on the default branch.
